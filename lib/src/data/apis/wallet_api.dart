@@ -45,6 +45,93 @@ class WalletApi {
 
     return ApiResponse.success(null, response.statusCode);
   }
+
+  Future<ApiResponse<WalletModel>> rechargeWallet({
+    required double amount,
+    String? description,
+  }) async {
+    final response = await _api.post(
+      '/wallet/recharge',
+      {
+        'amount': amount,
+        if (description != null && description.isNotEmpty)
+          'description': description,
+      },
+      requireAuth: true,
+    );
+
+    if (!response.success) {
+      return ApiResponse.error(
+        response.message ?? 'Failed to recharge wallet.',
+        response.statusCode,
+      );
+    }
+
+    return getWallet();
+  }
+
+  Future<ApiResponse<RazorpayOrderModel>> createRazorpayOrder({
+    required double amount,
+  }) async {
+    final response = await _api.post(
+      '/wallet/recharge/razorpay-order',
+      {'amount': amount},
+      requireAuth: true,
+    );
+
+    if (!response.success) {
+      return ApiResponse.error(
+        response.message ?? 'Failed to create payment order.',
+        response.statusCode,
+      );
+    }
+
+    final data = nestedData(response.data);
+    if (data == null) {
+      return ApiResponse.error('Invalid Razorpay order response');
+    }
+
+    return ApiResponse.success(
+      RazorpayOrderModel.fromJson(data),
+      response.statusCode,
+    );
+  }
+
+  Future<ApiResponse<WalletActionResult>> verifyRazorpayPayment({
+    required String razorpayOrderId,
+    required String razorpayPaymentId,
+    required String razorpaySignature,
+    String? transactionId,
+  }) async {
+    final response = await _api.post(
+      '/wallet/recharge/razorpay-verify',
+      {
+        'razorpay_order_id': razorpayOrderId,
+        'razorpay_payment_id': razorpayPaymentId,
+        'razorpay_signature': razorpaySignature,
+        if (transactionId != null && transactionId.isNotEmpty)
+          'transactionId': transactionId,
+      },
+      requireAuth: true,
+    );
+
+    if (!response.success) {
+      return ApiResponse.error(
+        response.message ?? 'Payment verification failed.',
+        response.statusCode,
+      );
+    }
+
+    final data = nestedData(response.data);
+    if (data == null) {
+      return ApiResponse.error('Invalid payment verification response');
+    }
+
+    return ApiResponse.success(
+      WalletActionResult.fromJson(data),
+      response.statusCode,
+    );
+  }
 }
 
 final walletApiProvider = Provider<WalletApi>((ref) {

@@ -2,6 +2,7 @@ import 'package:DriveForme/src/data/constants/colour_constants.dart';
 import 'package:DriveForme/src/data/constants/style_constants.dart';
 import 'package:DriveForme/src/data/models/wallet_model.dart';
 import 'package:DriveForme/src/data/providers/wallet_provider.dart';
+import 'package:DriveForme/src/interfaces/main_pages/profile/wallet_recharge_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -173,7 +174,10 @@ class _WalletPageState extends ConsumerState<WalletPage> {
                 24,
               ),
               children: [
-                _BalanceCard(balance: wallet.displayBalanceDetailed),
+                _BalanceCard(
+                  balance: wallet.displayBalanceDetailed,
+                  onAddBalance: () => WalletRechargeSheet.show(context),
+                ),
                 const SizedBox(height: 24),
                 _TransactionsHeader(onFilterTap: _showFilterSheet),
                 const SizedBox(height: 12),
@@ -233,8 +237,9 @@ class _RoundIconButton extends StatelessWidget {
 
 class _BalanceCard extends StatelessWidget {
   final String balance;
+  final VoidCallback onAddBalance;
 
-  const _BalanceCard({required this.balance});
+  const _BalanceCard({required this.balance, required this.onAddBalance});
 
   @override
   Widget build(BuildContext context) {
@@ -259,6 +264,37 @@ class _BalanceCard extends StatelessWidget {
                 Text('Available Balance', style: kWalletBalanceLabelR),
                 const SizedBox(height: 8),
                 Text(balance, style: kWalletBalanceAmountSB),
+                const SizedBox(height: 12),
+                Material(
+                  color: kWalletBalanceGold,
+                  borderRadius: BorderRadius.circular(30),
+                  child: InkWell(
+                    onTap: onAddBalance,
+                    borderRadius: BorderRadius.circular(30),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 9,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.add, color: kWhite, size: 15),
+                          const SizedBox(width: 3),
+                          Text(
+                            'Add Balance',
+                            style: kStyle(
+                              kMedium,
+                              kSize12,
+                              color: kWhite,
+                              height: 1.1,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

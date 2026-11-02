@@ -136,3 +136,48 @@ class WalletModel {
 
   String get displayBalanceDetailed => '₹${walletBalance.toStringAsFixed(3)}';
 }
+
+class RazorpayOrderModel {
+  const RazorpayOrderModel({
+    required this.orderId,
+    required this.amount,
+    required this.currency,
+    required this.transactionId,
+  });
+
+  final String orderId;
+  final double amount;
+  final String currency;
+  final String transactionId;
+
+  factory RazorpayOrderModel.fromJson(Map<String, dynamic> json) {
+    final order = json['order'] as Map<String, dynamic>? ?? {};
+    final rawAmount = order['amount'];
+    final amountInPaise = rawAmount is num ? rawAmount.toDouble() : 0;
+    return RazorpayOrderModel(
+      orderId: order['id']?.toString() ?? '',
+      amount: amountInPaise / 100,
+      currency: order['currency']?.toString() ?? 'INR',
+      transactionId: json['transactionId']?.toString() ?? '',
+    );
+  }
+}
+
+class WalletActionResult {
+  const WalletActionResult({required this.walletBalance});
+
+  final double walletBalance;
+
+  factory WalletActionResult.fromJson(Map<String, dynamic> json) {
+    return WalletActionResult(
+      walletBalance: _walletToDouble(json['walletBalance']) ?? 0,
+    );
+  }
+}
+
+String formatRupee(double amount) {
+  if (amount == amount.truncateToDouble()) {
+    return '₹ ${amount.toInt()}';
+  }
+  return '₹ ${amount.toStringAsFixed(2)}';
+}

@@ -7,6 +7,7 @@ import 'package:DriveForme/src/data/models/trip_location_model.dart';
 import 'package:DriveForme/src/data/models/trip_model.dart';
 import 'package:DriveForme/src/data/providers/live_driver_location_provider.dart';
 import 'package:DriveForme/src/data/services/trip_socket_service.dart';
+import 'package:DriveForme/src/data/utils/date_utils.dart';
 import 'package:DriveForme/src/data/utils/phone_launcher.dart';
 import 'package:DriveForme/src/data/utils/trip_lifecycle.dart';
 import 'package:DriveForme/src/data/utils/trip_screen_helpers.dart';
@@ -189,9 +190,7 @@ class _DriverFoundPageState extends ConsumerState<DriverFoundPage> {
 
     final otp = response.data!['otp']?.toString();
     final expiresAtRaw = response.data!['expiresAt'];
-    final expiresAt = expiresAtRaw == null
-        ? null
-        : DateTime.tryParse(expiresAtRaw.toString());
+    final expiresAt = parseApiDateTime(expiresAtRaw);
 
     setState(() {
       _isLoadingOtp = false;

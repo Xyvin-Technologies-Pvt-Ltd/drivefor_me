@@ -36,7 +36,8 @@ class PushNotificationService {
   final FlutterLocalNotificationsPlugin _local =
       FlutterLocalNotificationsPlugin();
 
-  bool _initialized = false;
+  Future<void>? _initFuture;
+  final Set<String> _shownAlertIds = {};
 
   void _captureSupportNotification(Map<String, dynamic> data) {
     if (data['action'] != 'open_support_chat') return;
@@ -76,9 +77,11 @@ class PushNotificationService {
     }
   }
 
-  Future<void> initialize() async {
-    if (_initialized) return;
-    _initialized = true;
+  Future<void> initialize() {
+    return _initFuture ??= _initialize();
+  }
+
+  Future<void> _initialize() async {
 
     await _messaging.requestPermission(alert: true, badge: true, sound: true);
 
@@ -135,13 +138,46 @@ class PushNotificationService {
     final notification = message.notification;
     final title = notification?.title ?? message.data['title']?.toString();
     final body = notification?.body ?? message.data['body']?.toString();
-    if (title == null && body == null) return;
+    await showTripAlert(
+      id: message.data['notificationId']?.toString(),
+      title: title,
+      body: body,
+      payload: message.data,
+    );
+  }
+
+  /// Banner for a trip alert that arrived over FCM or the live socket.
+  Future<void> showTripAlert({
+    String? id,
+    String? title,
+    String? body,
+    Map<String, dynamic>? payload,
+  }) async {
+    if ((title == null || title.isEmpty) && (body == null || body.isEmpty)) {
+      return;
+    }
+    final key = id?.trim() ?? '';
+    if (key.isNotEmpty) {
+      if (!_shownAlertIds.add(key)) return;
+      if (_shownAlertIds.length > 40) {
+        _shownAlertIds.remove(_shownAlertIds.first);
+      }
+    }
+
+    try {
+      await initialize();
+    } catch (e) {
+      log('Local notification init failed: $e', name: 'PushNotification');
+      return;
+    }
 
     await _local.show(
-      notification.hashCode,
+      key.isEmpty
+          ? DateTime.now().millisecondsSinceEpoch.remainder(1 << 31)
+          : key.hashCode & 0x7fffffff,
       title ?? 'DriveForme',
       body ?? '',
-      NotificationDetails(
+      const NotificationDetails(
         android: AndroidNotificationDetails(
           _kTripChannelId,
           _kTripChannelName,
@@ -150,9 +186,9 @@ class PushNotificationService {
           priority: Priority.high,
           icon: '@mipmap/ic_launcher',
         ),
-        iOS: const DarwinNotificationDetails(),
+        iOS: DarwinNotificationDetails(),
       ),
-      payload: jsonEncode(message.data),
+      payload: jsonEncode(payload ?? const <String, dynamic>{}),
     );
   }
 

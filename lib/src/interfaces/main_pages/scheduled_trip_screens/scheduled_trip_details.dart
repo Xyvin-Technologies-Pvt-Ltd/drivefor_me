@@ -83,7 +83,7 @@ class _ScheduledTripDetailsPageState extends ConsumerState<ScheduledTripDetailsP
   bool get _isPickupTime {
     if (widget.forcePickupTime) return true;
     final now = _truncateToMinute(DateTime.now());
-    final scheduled = _truncateToMinute(widget.scheduledAt);
+    final scheduled = _truncateToMinute(widget.scheduledAt.toLocal());
     return !now.isBefore(scheduled);
   }
 
@@ -165,7 +165,8 @@ class _ScheduledTripDetailsPageState extends ConsumerState<ScheduledTripDetailsP
     return 'Starts in $minutes min';
   }
 
-  String get _dateLabel => 'Date : ${_dateFormat.format(widget.scheduledAt)}';
+  String get _dateLabel =>
+      'Date : ${_dateFormat.format(widget.scheduledAt.toLocal())}';
 
   void _onImAtPickup() {
     Navigator.of(

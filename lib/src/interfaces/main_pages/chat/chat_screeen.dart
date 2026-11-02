@@ -323,7 +323,7 @@ class _MessageBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isMine = message.isMine;
     final time = message.createdAt != null
-        ? DateFormat('hh:mm a').format(message.createdAt!)
+        ? DateFormat('hh:mm a').format(message.createdAt!.toLocal())
         : '';
 
     return Align(

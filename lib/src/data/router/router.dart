@@ -1,4 +1,5 @@
 import 'package:DriveForme/src/data/constants/colour_constants.dart';
+import 'package:DriveForme/src/data/utils/date_utils.dart';
 import 'package:DriveForme/src/data/models/trip_model.dart';
 import 'package:DriveForme/src/interfaces/components/location_permission_gate.dart';
 import 'package:DriveForme/src/interfaces/main_pages/navbar.dart';
@@ -559,9 +560,5 @@ extension NavigatorTransitionHelpers on NavigatorState {
 }
 
 DateTime _routeDateTime(dynamic value, {required DateTime fallback}) {
-  if (value is DateTime) return value.toLocal();
-  if (value is String) {
-    return DateTime.tryParse(value)?.toLocal() ?? fallback;
-  }
-  return fallback;
+  return parseApiDateTime(value) ?? fallback;
 }

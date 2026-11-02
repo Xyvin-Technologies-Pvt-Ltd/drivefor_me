@@ -1,6 +1,7 @@
 import 'package:DriveForme/src/data/models/trip_location_model.dart';
 import 'package:DriveForme/src/data/providers/notification_provider.dart';
 import 'package:DriveForme/src/data/providers/user_provider.dart';
+import 'package:DriveForme/src/data/services/notification_token_service.dart';
 import 'package:DriveForme/src/data/services/secure_storage_service.dart';
 import 'package:DriveForme/src/data/services/trip_socket_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,37 +64,53 @@ class LiveTripTrackingNotifier extends Notifier<int> {
   int build() {
     ref.keepAlive();
     final socket = ref.watch(tripSocketServiceProvider);
-    socket.connect(
-      onDriverLocation: (payload) {
-        final tripId = payload['tripId']?.toString() ?? '';
-        final latitude = _toDouble(payload['latitude']);
-        final longitude = _toDouble(payload['longitude']);
-        if (tripId.isEmpty || latitude == null || longitude == null) return;
+    void onDriverLocation(Map<String, dynamic> payload) {
+      final tripId = payload['tripId']?.toString() ?? '';
+      final latitude = _toDouble(payload['latitude']);
+      final longitude = _toDouble(payload['longitude']);
+      if (tripId.isEmpty || latitude == null || longitude == null) return;
 
-        ref.read(liveDriverLocationProvider.notifier).apply(
-              LiveDriverLocationUpdate(
-                tripId: tripId,
-                driverId: payload['driverId']?.toString() ?? '',
-                location: TripLocation(
-                  latitude: latitude,
-                  longitude: longitude,
-                ),
-                tripStatus: payload['tripStatus']?.toString(),
+      ref.read(liveDriverLocationProvider.notifier).apply(
+            LiveDriverLocationUpdate(
+              tripId: tripId,
+              driverId: payload['driverId']?.toString() ?? '',
+              location: TripLocation(
+                latitude: latitude,
+                longitude: longitude,
               ),
-            );
-      },
-    );
+              tripStatus: payload['tripStatus']?.toString(),
+            ),
+          );
+    }
 
-    socket.listenForNewNotifications(() {
+    socket.listenForNewNotifications((notification) {
       ref.invalidate(notificationsProvider);
+      final title = notification['title']?.toString();
+      final body = notification['body']?.toString();
+      final id = notification['_id']?.toString() ??
+          notification['id']?.toString() ??
+          '';
+      ref.read(pushNotificationServiceProvider).showTripAlert(
+            id: id,
+            title: title,
+            body: body,
+            payload: notification,
+          );
     });
 
     Future<void> joinOwnerRoom() async {
-      final user = await ref.read(userProvider.future);
-      var userId = user?.userId ?? '';
+      final storage = ref.read(secureStorageServiceProvider);
+      final token = await storage.getAuthToken();
+      var userId = await storage.getUserId() ?? '';
       if (userId.isEmpty) {
-        userId = await ref.read(secureStorageServiceProvider).getUserId() ?? '';
+        final user = await ref.read(userProvider.future);
+        userId = user?.userId ?? '';
       }
+      socket.connect(
+        authToken: token,
+        userId: userId,
+        onDriverLocation: onDriverLocation,
+      );
       if (userId.isEmpty) return;
       socket.joinUserRoom(userId);
     }

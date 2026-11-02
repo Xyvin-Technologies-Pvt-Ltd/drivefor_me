@@ -59,7 +59,7 @@ class _WalletPageState extends ConsumerState<WalletPage> {
 
     final grouped = <DateTime, List<WalletTransaction>>{};
     for (final tx in sorted) {
-      final createdAt = tx.createdAt;
+      final createdAt = tx.createdAt?.toLocal();
       if (createdAt == null) continue;
       final key = DateTime(createdAt.year, createdAt.month, createdAt.day);
       grouped.putIfAbsent(key, () => []).add(tx);

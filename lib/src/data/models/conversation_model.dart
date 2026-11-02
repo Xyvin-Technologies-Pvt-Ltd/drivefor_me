@@ -1,3 +1,5 @@
+import 'package:DriveForme/src/data/utils/date_utils.dart';
+
 class ConversationModel {
   final String otherUserId;
   final String otherUserName;
@@ -62,9 +64,5 @@ class ConversationModel {
 
 /// Shared date parsing for conversation + message models.
 class ChatMessageModelParse {
-  static DateTime? parseDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value.toLocal();
-    return DateTime.tryParse(value.toString())?.toLocal();
-  }
+  static DateTime? parseDate(dynamic value) => parseApiDateTime(value);
 }

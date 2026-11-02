@@ -1,3 +1,4 @@
+import 'package:DriveForme/src/data/utils/date_utils.dart';
 import 'package:intl/intl.dart';
 
 double? _walletToDouble(dynamic value) {
@@ -6,11 +7,7 @@ double? _walletToDouble(dynamic value) {
   return double.tryParse(value.toString());
 }
 
-DateTime? _walletParseDate(dynamic value) {
-  if (value == null) return null;
-  if (value is DateTime) return value.toLocal();
-  return DateTime.tryParse(value.toString())?.toLocal();
-}
+DateTime? _walletParseDate(dynamic value) => parseApiDateTime(value);
 
 class WalletTransaction {
   final String id;
@@ -52,12 +49,12 @@ class WalletTransaction {
 
   String get displayDate {
     if (createdAt == null) return '—';
-    return DateFormat('d MMM yyyy, hh:mm a').format(createdAt!);
+    return DateFormat('d MMM yyyy, hh:mm a').format(createdAt!.toLocal());
   }
 
   String get walletListDate {
     if (createdAt == null) return '—';
-    return DateFormat('EEE d, MMM h.mm a').format(createdAt!);
+    return DateFormat('EEE d, MMM h.mm a').format(createdAt!.toLocal());
   }
 
   String get walletCreditAmount => '+ ₹${amount.abs().toStringAsFixed(0)}';

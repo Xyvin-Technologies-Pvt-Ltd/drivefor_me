@@ -14,8 +14,20 @@ class TripApi {
     return _api.post('/trips/manual', payload, requireAuth: true);
   }
 
-  Future<ApiResponse<List<TripModel>>> listOngoingTrips() {
-    return _listTrips(status: 'in_progress');
+  Future<ApiResponse<List<TripModel>>> listOngoingTrips() async {
+    final response = await _listTrips(
+      queryParams: {'statuses': activeOwnerTripStatuses},
+    );
+    if (!response.success) {
+      return ApiResponse.error(
+        response.message ?? 'Failed to load trips.',
+        response.statusCode,
+      );
+    }
+    final trips = (response.data ?? const <TripModel>[])
+        .where((trip) => trip.isActiveBooking)
+        .toList();
+    return ApiResponse.success(trips, response.statusCode);
   }
 
   Future<ApiResponse<List<TripModel>>> listCompletedTrips() {
@@ -27,10 +39,8 @@ class TripApi {
   }
 
   /// Any non-completed / non-cancelled trip that blocks a new booking.
-  static const activeOwnerTripStatuses =
-      'pre_booked,awaiting_pre_auth_window,requires_admin_call,'
-      'call_completed_pending_auth,pre_authorized,confirmed,'
-      'pending_assignment,driver_assigned,scheduled,in_progress';
+  static final activeOwnerTripStatuses =
+      TripModel.activeBookingStatuses.join(',');
 
   Future<ApiResponse<TripModel?>> findActiveOwnerTrip() async {
     final response = await _listTrips(
@@ -44,7 +54,9 @@ class TripApi {
       );
     }
 
-    final trips = response.data ?? const <TripModel>[];
+    final trips = (response.data ?? const <TripModel>[])
+        .where((trip) => trip.isActiveBooking)
+        .toList();
     if (trips.isEmpty) {
       return ApiResponse.success(null, response.statusCode);
     }

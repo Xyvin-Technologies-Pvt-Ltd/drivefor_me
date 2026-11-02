@@ -1,3 +1,5 @@
+import 'package:DriveForme/src/data/utils/date_utils.dart';
+
 class SupportTicket {
   SupportTicket(this.json);
   final Map<String, dynamic> json;
@@ -30,7 +32,6 @@ class SupportMessage {
         : 'Support';
   }
 
-  DateTime? get createdAt =>
-      DateTime.tryParse(json['createdAt']?.toString() ?? '');
+  DateTime? get createdAt => parseApiDateTime(json['createdAt']);
   bool get isRead => json['readAt'] != null;
 }

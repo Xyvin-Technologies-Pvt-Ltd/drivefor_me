@@ -5,6 +5,7 @@ import 'package:DriveForme/src/data/constants/style_constants.dart';
 import 'package:DriveForme/src/data/models/trip_model.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
 import 'package:DriveForme/src/data/utils/trip_lifecycle.dart';
+import 'package:DriveForme/src/data/utils/trip_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -58,7 +59,7 @@ class _TripsPageState extends ConsumerState<TripsPage> {
       final trips = response.data!;
       // Defense-in-depth: never mix cancelled trips into Upcoming/Ongoing.
       _trips = switch (requestedTab) {
-        0 => trips.where((t) => t.isInProgress).toList(),
+        0 => trips.where((t) => t.isActiveBooking).toList(),
         1 => trips
             .where((t) => !t.isCancelled && !t.isCompleted && !t.isInProgress)
             .toList(),
@@ -398,10 +399,13 @@ class _OngoingTripCard extends StatelessWidget {
           Align(
             alignment: Alignment.centerRight,
             child: _TrackTripButton(
+              label: trip.isInProgress ? 'Track Trip' : 'View trip',
               onPressed: () {
+                final target = tripNavigationTarget(trip);
+                if (target == null) return;
                 NavigationService().pushNamed(
-                  'trip_progress',
-                  arguments: trip.toProgressArguments(),
+                  target.route,
+                  arguments: target.arguments,
                 );
               },
             ),
@@ -1160,9 +1164,10 @@ class _EmptyTripsMessage extends StatelessWidget {
 }
 
 class _TrackTripButton extends StatelessWidget {
+  final String label;
   final VoidCallback onPressed;
 
-  const _TrackTripButton({required this.onPressed});
+  const _TrackTripButton({this.label = 'Track Trip', required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -1174,7 +1179,7 @@ class _TrackTripButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(kPillRadius),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Text('Track Trip', style: kTrackTripSB),
+          child: Text(label, style: kTrackTripSB),
         ),
       ),
     );

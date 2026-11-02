@@ -1,4 +1,4 @@
-import 'package:intl/intl.dart';
+import 'package:DriveForme/src/data/utils/date_utils.dart';
 
 class NotificationModel {
   final String id;
@@ -41,27 +41,20 @@ class NotificationModel {
     if (diff.inHours < 1) return '${diff.inMinutes} min ago';
     if (diff.inHours < 24) return '${diff.inHours} hours ago';
     if (diff.inDays < 7) return '${diff.inDays} days ago';
-    return DateFormat('d MMM').format(createdAt!);
+    return formatLocalDateTime(createdAt!, 'd MMM');
   }
 
   String get dateSectionLabel {
     if (createdAt == null) return 'Recent';
+    final local = createdAt!.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final target = DateTime(
-      createdAt!.year,
-      createdAt!.month,
-      createdAt!.day,
-    );
+    final target = DateTime(local.year, local.month, local.day);
     final diff = target.difference(today).inDays;
     if (diff == 0) return 'Today';
     if (diff == -1) return 'Yesterday';
-    return DateFormat('EEE, d MMM').format(createdAt!);
+    return formatLocalDateTime(local, 'EEE, d MMM');
   }
 
-  static DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value.toLocal();
-    return DateTime.tryParse(value.toString())?.toLocal();
-  }
+  static DateTime? _parseDate(dynamic value) => parseApiDateTime(value);
 }

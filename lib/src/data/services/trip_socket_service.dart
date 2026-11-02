@@ -11,29 +11,50 @@ class TripSocketService {
   final String socketUrl;
   io.Socket? _socket;
   void Function(Map<String, dynamic>)? _onDriverLocation;
+  void Function(Map<String, dynamic>)? _onNewNotification;
   String? _userId;
+  String? _authToken;
   String? _tripId;
+  bool _handshakeAuthenticated = false;
 
   bool get isConnected => _socket?.connected ?? false;
 
   void ensureConnected() => connect();
 
+  Map<String, dynamic> _handshakeAuth() {
+    return {
+      if (_authToken != null && _authToken!.isNotEmpty) 'token': _authToken,
+      if (_userId != null && _userId!.isNotEmpty) 'userId': _userId,
+    };
+  }
+
   void connect({
     void Function(Map<String, dynamic>)? onDriverLocation,
+    String? authToken,
+    String? userId,
   }) {
     if (onDriverLocation != null) _onDriverLocation = onDriverLocation;
+    if (authToken != null && authToken.isNotEmpty) _authToken = authToken;
+    if (userId != null && userId.isNotEmpty) _userId = userId;
 
+    final auth = _handshakeAuth();
+    final created = _socket == null;
     _socket ??= io.io(
       socketUrl,
       io.OptionBuilder()
           .setTransports(['websocket'])
           .enableReconnection()
           .disableAutoConnect()
+          .setAuth(auth)
           .build(),
     );
+    if (!created && auth.isNotEmpty) {
+      _socket!.auth = auth;
+    }
 
     _socket!
       ..off('connect')
+      ..off('disconnect')
       ..off('driver_location_update')
       ..on('connect', (_) {
         log('Trip socket connected', name: 'TripSocketService');
@@ -46,9 +67,21 @@ class TripSocketService {
         final map = _asMap(data);
         if (map != null) _onDriverLocation?.call(map);
       });
+    _bindNotificationListener();
+
+    // A socket that connected before the login token was available never
+    // auto-joined user_room_*, so the server emitted the trip alert into an
+    // empty room. Reconnect once the handshake can identify the owner.
+    final needsAuthenticatedHandshake =
+        auth.isNotEmpty && !_handshakeAuthenticated && _socket!.connected == true;
+    if (auth.isNotEmpty) _handshakeAuthenticated = true;
 
     if (_socket!.connected != true) {
       _socket!.connect();
+    } else if (needsAuthenticatedHandshake) {
+      _socket!
+        ..disconnect()
+        ..connect();
     } else {
       _rejoinRooms();
     }
@@ -108,9 +141,23 @@ class TripSocketService {
     }
   }
 
-  void listenForNewNotifications(void Function() onNewNotification) {
-    _socket?.off('new_notification');
-    _socket?.on('new_notification', (_) => onNewNotification());
+  void listenForNewNotifications(
+    void Function(Map<String, dynamic> notification) onNewNotification,
+  ) {
+    _onNewNotification = onNewNotification;
+    _bindNotificationListener();
+  }
+
+  void _bindNotificationListener() {
+    final socket = _socket;
+    final handler = _onNewNotification;
+    if (socket == null || handler == null) return;
+    socket
+      ..off('new_notification')
+      ..on('new_notification', (data) {
+        final map = _asMap(data);
+        if (map != null) handler(map);
+      });
   }
 
   final List<void Function(Map<String, dynamic>)> _tripReassignedHandlers = [];
@@ -171,7 +218,10 @@ class TripSocketService {
     _socket?.dispose();
     _socket = null;
     _onDriverLocation = null;
+    _onNewNotification = null;
     _userId = null;
+    _authToken = null;
+    _handshakeAuthenticated = false;
     _tripId = null;
     _tripReassignedHandlers.clear();
     _tripUpdatedHandlers.clear();

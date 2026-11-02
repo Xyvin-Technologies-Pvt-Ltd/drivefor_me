@@ -1,6 +1,5 @@
-import 'package:intl/intl.dart';
-
 import 'package:DriveForme/src/data/models/trip_location_model.dart';
+import 'package:DriveForme/src/data/utils/date_utils.dart';
 
 class TripModel {
   /// Shown when the backend does not provide a driver / person full name.
@@ -263,19 +262,21 @@ class TripModel {
 
   bool get isPickupTimeReached {
     if (pickupAt == null) return rideTime != 'scheduled';
+    final nowClock = DateTime.now();
+    final pickup = pickupAt!.toLocal();
     final now = DateTime(
-      DateTime.now().year,
-      DateTime.now().month,
-      DateTime.now().day,
-      DateTime.now().hour,
-      DateTime.now().minute,
+      nowClock.year,
+      nowClock.month,
+      nowClock.day,
+      nowClock.hour,
+      nowClock.minute,
     );
     final scheduled = DateTime(
-      pickupAt!.year,
-      pickupAt!.month,
-      pickupAt!.day,
-      pickupAt!.hour,
-      pickupAt!.minute,
+      pickup.year,
+      pickup.month,
+      pickup.day,
+      pickup.hour,
+      pickup.minute,
     );
     return !now.isBefore(scheduled);
   }
@@ -286,11 +287,28 @@ class TripModel {
       !isPickupTimeReached &&
       !isCancelled;
 
+  /// Statuses that still occupy the owner's single booking slot.
+  static const activeBookingStatuses = [
+    'pre_booked',
+    'awaiting_pre_auth_window',
+    'requires_admin_call',
+    'call_completed_pending_auth',
+    'pre_authorized',
+    'confirmed',
+    'pending_assignment',
+    'driver_assigned',
+    'scheduled',
+    'in_progress',
+  ];
+
   bool get isInProgress => status == 'in_progress';
 
   bool get isCompleted => status == 'completed';
 
   bool get isCancelled => status == 'cancelled';
+
+  /// True while this booking should stop the owner from creating another.
+  bool get isActiveBooking => activeBookingStatuses.contains(status);
 
   bool get isWalletPayment => paymentMethod == 'wallet';
 
@@ -432,17 +450,19 @@ class TripModel {
 
   String formatMetaPrimary(DateTime? date) {
     if (date == null) return '—';
+    final local = date.toLocal();
     if (isLongTrip && durationUnit == 'days' && durationValue > 1) {
-      final end = date.add(Duration(days: durationValue - 1));
-      return '${DateFormat('d MMMM').format(date)} to ${DateFormat('d MMMM').format(end)}';
+      final end = local.add(Duration(days: durationValue - 1));
+      return '${formatLocalDateTime(local, 'd MMMM')} to ${formatLocalDateTime(end, 'd MMMM')}';
     }
-    return DateFormat('d MMMM').format(date);
+    return formatLocalDateTime(local, 'd MMMM');
   }
 
   String formatScheduleLine(DateTime? date) {
     if (date == null) return metaRest.trim();
-    final dayLabel = _relativeDayLabel(date);
-    final time = DateFormat('hh:mm a').format(date);
+    final local = date.toLocal();
+    final dayLabel = _relativeDayLabel(local);
+    final time = formatLocalDateTime(local, 'hh:mm a');
     return '$dayLabel, $time$metaRest';
   }
 
@@ -654,7 +674,7 @@ class TripModel {
       'amountPaid': isPaid ? displayPrice : '₹ 0',
       'refundAmount': isPaid ? displayPrice : '—',
       'refundInitiatedAt': cancelledAt != null
-          ? DateFormat('d MMMM yyyy, hh:mm a').format(cancelledAt!)
+          ? formatLocalDateTime(cancelledAt!, 'd MMMM yyyy, hh:mm a')
           : '—',
       'isPaid': isPaid,
       'hasRefund': hasRefund,
@@ -738,11 +758,7 @@ class TripModel {
     return null;
   }
 
-  static DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    if (value is DateTime) return value.toLocal();
-    return DateTime.tryParse(value.toString())?.toLocal();
-  }
+  static DateTime? _parseDate(dynamic value) => parseApiDateTime(value);
 
   static double? _toDouble(dynamic value) {
     if (value == null) return null;
@@ -826,13 +842,14 @@ class TripModel {
   }
 
   static String _relativeDayLabel(DateTime date) {
+    final local = date.toLocal();
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    final target = DateTime(date.year, date.month, date.day);
+    final target = DateTime(local.year, local.month, local.day);
     final diff = target.difference(today).inDays;
     if (diff == 0) return 'Today';
     if (diff == 1) return 'Tomorrow';
     if (diff == -1) return 'Yesterday';
-    return DateFormat('EEE, dd MMM').format(date);
+    return formatLocalDateTime(local, 'EEE, dd MMM');
   }
 }

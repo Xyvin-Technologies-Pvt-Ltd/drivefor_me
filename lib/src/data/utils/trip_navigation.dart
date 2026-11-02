@@ -11,6 +11,12 @@ class TripNavigationTarget {
 }
 
 const _activeTripStatuses = {
+  'pre_booked',
+  'awaiting_pre_auth_window',
+  'requires_admin_call',
+  'call_completed_pending_auth',
+  'pre_authorized',
+  'confirmed',
   'pending_assignment',
   'scheduled',
   'driver_assigned',
@@ -22,7 +28,19 @@ bool isActiveTripStatus(String status) => _activeTripStatuses.contains(status);
 /// Returns the route + args for resuming or transitioning based on trip status.
 TripNavigationTarget? tripNavigationTarget(TripModel trip) {
   switch (trip.status) {
+    case 'pre_booked':
+    case 'awaiting_pre_auth_window':
+    case 'requires_admin_call':
+    case 'call_completed_pending_auth':
+    case 'pre_authorized':
+    case 'confirmed':
     case 'pending_assignment':
+      if (trip.isFutureScheduled || trip.hasAssignedDriver) {
+        return TripNavigationTarget(
+          route: 'scheduled_trip_details',
+          arguments: trip.toScheduledDetailsArguments(),
+        );
+      }
       return TripNavigationTarget(
         route: 'waiting_driver',
         arguments: trip.toWaitingDriverArguments(),

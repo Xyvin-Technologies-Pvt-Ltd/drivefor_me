@@ -34,7 +34,9 @@ class TripScheduledPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final scheduledLabel = _scheduledDateTimeFormat.format(scheduledAt);
+    final scheduledLabel = _scheduledDateTimeFormat.format(
+      scheduledAt.toLocal(),
+    );
 
     return Scaffold(
       backgroundColor: kScreenBg,

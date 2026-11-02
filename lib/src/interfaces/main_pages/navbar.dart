@@ -61,7 +61,9 @@ class _NavBarState extends ConsumerState<NavBar> {
       if (!mounted) return;
       final push = ref.read(pushNotificationServiceProvider);
       try {
-        await push.initialize();
+        await ref
+            .read(notificationTokenServiceProvider)
+            .registerTokenIfAvailable();
         if (mounted) await push.openPendingSupportChat();
       } catch (_) {
         // Support remains available in-app if push services are unavailable.

@@ -19,6 +19,7 @@ import 'package:DriveForme/src/data/models/vehicle_model.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
 import 'package:DriveForme/src/data/providers/pricing_provider.dart';
 import 'package:DriveForme/src/data/services/trip_fare_service.dart';
+import 'package:DriveForme/src/data/utils/trip_lifecycle.dart';
 import 'package:DriveForme/src/interfaces/components/add_vehicle_sheet.dart';
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
 import 'package:DriveForme/src/interfaces/components/schedule_sheet.dart';
@@ -1678,11 +1679,12 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
     }
     final activeTrip = activeCheck.data;
     if (activeTrip != null) {
-      _showError(
-        'You already have an active trip (${activeTrip.tripNumber.isNotEmpty ? activeTrip.tripNumber : activeTrip.displayTripId}). '
-        'Complete or cancel it before booking a new one.',
+      final cleared = await resolveActiveTripBeforeBooking(
+        context: context,
+        activeTrip: activeTrip,
+        ref: ref,
       );
-      return;
+      if (!mounted || !cleared) return;
     }
 
     final payloadResult = _buildTripPayload(userResponse.data!.userId);

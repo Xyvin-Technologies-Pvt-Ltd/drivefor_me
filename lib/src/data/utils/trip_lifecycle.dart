@@ -1,10 +1,8 @@
 import 'package:DriveForme/src/data/apis/trip_api.dart';
 import 'package:DriveForme/src/data/models/trip_model.dart';
 import 'package:DriveForme/src/data/providers/active_trip_provider.dart';
-import 'package:DriveForme/src/data/providers/nav_provider.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
 import 'package:DriveForme/src/data/services/secure_storage_service.dart';
-import 'package:DriveForme/src/data/utils/trip_navigation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -21,43 +19,21 @@ Future<bool> navigateToCreateTripIfAllowed({
   if (!context.mounted) return false;
 
   if (!response.success) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          response.message ?? 'Unable to verify your active trips.',
-        ),
-      ),
+    await _showMessageDialog(
+      context,
+      response.message ?? 'Unable to verify your active trips.',
     );
     return false;
   }
 
   final activeTrip = response.data;
   if (activeTrip != null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'You already have an active trip (${activeTrip.tripNumber.isNotEmpty ? activeTrip.tripNumber : activeTrip.displayTripId}). '
-          'Complete or cancel it before booking a new one.',
-        ),
-        action: SnackBarAction(
-          label: 'View',
-          onPressed: () {
-            final target = tripNavigationTarget(activeTrip);
-            if (target != null) {
-              NavigationService().pushNamed(
-                target.route,
-                arguments: target.arguments,
-              );
-              return;
-            }
-            final container = ProviderScope.containerOf(context);
-            container.read(selectedIndexProvider.notifier).updateIndex(1);
-            NavigationService().resetToNavbar();
-          },
-        ),
-      ),
+    final cleared = await resolveActiveTripBeforeBooking(
+      context: context,
+      activeTrip: activeTrip,
+      ref: ref,
     );
-    return false;
+    if (!context.mounted || !cleared) return false;
   }
 
   NavigationService().pushNamed('create_trip');
@@ -103,15 +79,102 @@ Future<bool> showCancelTripDialog(
   return result == true;
 }
 
+String _activeTripPhrase(TripModel trip) {
+  switch (trip.status) {
+    case 'in_progress':
+      return 'in progress';
+    case 'pending_assignment':
+      return 'waiting for a driver';
+    case 'driver_assigned':
+      return 'assigned to a driver';
+    case 'scheduled':
+      return 'scheduled';
+    default:
+      return trip.upcomingStatusLabel().toLowerCase();
+  }
+}
+
+/// Explains the booking that is blocking a new one.
+/// Returns true when that booking was cancelled.
+Future<bool> resolveActiveTripBeforeBooking({
+  required BuildContext context,
+  required TripModel activeTrip,
+  WidgetRef? ref,
+}) async {
+  final number = activeTrip.tripNumber.isNotEmpty
+      ? activeTrip.tripNumber
+      : activeTrip.displayTripId;
+  final choice = await showDialog<String>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Active trip'),
+      content: Text(
+        'Trip $number is still ${_activeTripPhrase(activeTrip)}. '
+        'Cancel it before booking a new one.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop('close'),
+          child: const Text('Close'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop('cancel'),
+          child: const Text('Cancel trip'),
+        ),
+      ],
+    ),
+  );
+
+  if (choice != 'cancel' || !context.mounted) return false;
+
+  final cancelled = await cancelTripWithDialog(
+    context: context,
+    ref: ref,
+    tripMongoId: activeTrip.id,
+    reason: 'Cancelled to book a new trip',
+  );
+  return cancelled != null;
+}
+
+Future<void> _showMessageDialog(BuildContext context, String message) {
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      content: Text(message),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
+}
+
+TripApi _tripApi(BuildContext context, WidgetRef? ref) {
+  if (ref != null) return ref.read(tripApiProvider);
+  return ProviderScope.containerOf(context).read(tripApiProvider);
+}
+
+SecureStorageService _storage(BuildContext context, WidgetRef? ref) {
+  if (ref != null) return ref.read(secureStorageServiceProvider);
+  return ProviderScope.containerOf(context).read(secureStorageServiceProvider);
+}
+
+ActiveTripNotifier _activeTrips(BuildContext context, WidgetRef? ref) {
+  if (ref != null) return ref.read(activeTripProvider.notifier);
+  return ProviderScope.containerOf(context).read(activeTripProvider.notifier);
+}
+
 Future<TripModel?> cancelTripWithDialog({
   required BuildContext context,
-  required WidgetRef ref,
+  WidgetRef? ref,
   required String tripMongoId,
   String? reason,
 }) async {
   if (tripMongoId.isEmpty) return null;
 
-  final tripApi = ref.read(tripApiProvider);
+  final tripApi = _tripApi(context, ref);
 
   double previewAmount = 0;
   String? previewMessage;
@@ -122,12 +185,9 @@ Future<TripModel?> cancelTripWithDialog({
     previewMessage = preview.data!['message']?.toString();
     if (preview.data!['allowed'] == false) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              previewMessage ?? 'Cancellation is not allowed at this stage.',
-            ),
-          ),
+        await _showMessageDialog(
+          context,
+          previewMessage ?? 'Cancellation is not allowed at this stage.',
         );
       }
       return null;
@@ -143,6 +203,8 @@ Future<TripModel?> cancelTripWithDialog({
   );
   if (!confirmed || !context.mounted) return null;
 
+  final storage = _storage(context, ref);
+  final activeTrips = _activeTrips(context, ref);
   final response = await tripApi.cancelTrip(
     tripMongoId,
     reason: reason ?? 'Cancelled by vehicle owner',
@@ -151,24 +213,22 @@ Future<TripModel?> cancelTripWithDialog({
   if (!context.mounted) return null;
 
   if (!response.success) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(response.message ?? 'Failed to cancel trip.')),
+    await _showMessageDialog(
+      context,
+      response.message ?? 'Failed to cancel trip.',
     );
     return null;
   }
 
-  await ref.read(secureStorageServiceProvider).clearActiveTripId();
-  ref.read(activeTripProvider.notifier).clear();
+  await storage.clearActiveTripId();
+  activeTrips.clear();
 
   final trip = response.data;
   if (trip != null && trip.hasCancellationCharge && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          response.message ??
-              'Trip cancelled. Cancellation charge: ${trip.cancellationChargeDisplay}.',
-        ),
-      ),
+    await _showMessageDialog(
+      context,
+      response.message ??
+          'Trip cancelled. Cancellation charge: ${trip.cancellationChargeDisplay}.',
     );
   }
 

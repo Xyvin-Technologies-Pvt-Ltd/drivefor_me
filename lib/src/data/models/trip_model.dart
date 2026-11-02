@@ -308,7 +308,12 @@ class TripModel {
   bool get isCancelled => status == 'cancelled';
 
   /// True while this booking should stop the owner from creating another.
-  bool get isActiveBooking => activeBookingStatuses.contains(status);
+  /// A trip with a cancellation time is finished even if its status lagged behind.
+  bool get isActiveBooking =>
+      cancelledAt == null &&
+      !isCancelled &&
+      !isCompleted &&
+      activeBookingStatuses.contains(status);
 
   bool get isWalletPayment => paymentMethod == 'wallet';
 

@@ -3,6 +3,7 @@ import 'package:DriveForme/src/data/models/trip_model.dart';
 import 'package:DriveForme/src/data/providers/active_trip_provider.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
 import 'package:DriveForme/src/data/services/secure_storage_service.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -250,13 +251,10 @@ Future<void> navigateAfterDriverReassigned({
 }) async {
   final context = NavigationService.navigatorKey.currentContext;
   if (context != null && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message ??
-              'Your driver cancelled. Finding another driver nearby...',
-        ),
-      ),
+    showAppSnackBar(
+      context,
+      message ??
+          'Your driver cancelled. Finding another driver nearby...',
     );
   }
 

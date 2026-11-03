@@ -6,6 +6,7 @@ import 'package:DriveForme/src/data/models/trip_model.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
 import 'package:DriveForme/src/data/utils/trip_lifecycle.dart';
 import 'package:DriveForme/src/data/utils/trip_navigation.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -700,11 +701,7 @@ class _CompletedTripCard extends StatelessWidget {
                 child: _OutlinedTripAction(
                   label: 'Download Invoice',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Invoice download coming soon.'),
-                      ),
-                    );
+                    showAppSnackBar(context, 'Invoice download coming soon.');
                   },
                 ),
               ),

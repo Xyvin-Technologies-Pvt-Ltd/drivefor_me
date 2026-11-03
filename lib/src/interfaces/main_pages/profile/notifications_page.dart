@@ -7,6 +7,7 @@ import 'package:DriveForme/src/data/models/notification_model.dart';
 import 'package:DriveForme/src/data/providers/notification_provider.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
 import 'package:DriveForme/src/data/utils/trip_navigation.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
@@ -121,10 +122,9 @@ class NotificationsPage extends ConsumerWidget {
           .read(notificationApiProvider)
           .markAsRead(item.id);
       if (!response.success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message ?? 'Failed to mark as read.'),
-          ),
+        showAppSnackBar(
+          context,
+          response.message ?? 'Failed to mark as read.',
         );
       }
       ref.invalidate(notificationsProvider);
@@ -158,10 +158,9 @@ class NotificationsPage extends ConsumerWidget {
     if (!context.mounted) return;
 
     if (!tripResponse.success || tripResponse.data == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(tripResponse.message ?? 'Could not load trip details.'),
-        ),
+      showAppSnackBar(
+        context,
+        tripResponse.message ?? 'Could not load trip details.',
       );
       return;
     }
@@ -192,9 +191,7 @@ class NotificationsPage extends ConsumerWidget {
     if (!context.mounted) return;
 
     if (!response.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.message ?? 'Failed to delete.')),
-      );
+      showAppSnackBar(context, response.message ?? 'Failed to delete.');
       return;
     }
 

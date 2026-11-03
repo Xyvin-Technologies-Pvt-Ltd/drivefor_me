@@ -5,6 +5,7 @@ import 'package:DriveForme/src/data/apis/support_api.dart';
 import 'package:DriveForme/src/data/models/support_models.dart';
 import 'package:DriveForme/src/data/services/support_events.dart';
 import 'package:DriveForme/src/interfaces/main_pages/completed_trip_screens/raise_ticket_page.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 
 class SupportTicketsPage extends ConsumerStatefulWidget {
   const SupportTicketsPage({super.key});
@@ -296,9 +297,7 @@ class _SupportChatPageState extends ConsumerState<SupportChatPage>
   }
 
   void _showError(Object error) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(error.toString())));
+    showAppSnackBar(context, error.toString());
   }
 
   Future<void> _send() async {

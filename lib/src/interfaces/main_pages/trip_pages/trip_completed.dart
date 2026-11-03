@@ -7,6 +7,7 @@ import 'package:DriveForme/src/data/models/trip_model.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
 import 'package:DriveForme/src/data/services/trip_socket_service.dart';
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -257,11 +258,7 @@ class _TripCompletedPageState extends ConsumerState<TripCompletedPage> {
     // Cash: Payment Completed only after the driver marks cash as collected.
     if (_isCash) {
       if (widget.tripMongoId.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Trip id missing. Please reopen the trip.'),
-          ),
-        );
+        showAppSnackBar(context, 'Trip id missing. Please reopen the trip.');
         return;
       }
 
@@ -280,12 +277,9 @@ class _TripCompletedPageState extends ConsumerState<TripCompletedPage> {
         _startCashCollectionWatch();
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Waiting for the driver to confirm cash collection.',
-          ),
-        ),
+      showAppSnackBar(
+        context,
+        'Waiting for the driver to confirm cash collection.',
       );
       return;
     }

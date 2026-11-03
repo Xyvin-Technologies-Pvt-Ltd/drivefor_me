@@ -5,6 +5,7 @@ import 'package:DriveForme/src/data/constants/colour_constants.dart';
 import 'package:DriveForme/src/data/constants/style_constants.dart';
 import 'package:DriveForme/src/data/models/chat_message_model.dart';
 import 'package:DriveForme/src/data/models/trip_model.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -155,8 +156,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     setState(() => _isSending = false);
 
     if (!response.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.message ?? 'Failed to send message.')),
+      showAppSnackBar(
+        context,
+        response.message ?? 'Failed to send message.',
       );
       return;
     }

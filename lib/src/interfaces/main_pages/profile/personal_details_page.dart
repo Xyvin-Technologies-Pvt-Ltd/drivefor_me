@@ -4,6 +4,7 @@ import 'package:DriveForme/src/data/models/user_model.dart';
 import 'package:DriveForme/src/data/providers/user_provider.dart';
 import 'package:DriveForme/src/interfaces/components/input_field.dart';
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -69,9 +70,7 @@ class _PersonalDetailsPageState extends ConsumerState<PersonalDetailsPage> {
 
   void _save() {
     setState(() => _isEditing = false);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile update coming soon.')),
-    );
+    showAppSnackBar(context, 'Profile update coming soon.');
   }
 
   @override

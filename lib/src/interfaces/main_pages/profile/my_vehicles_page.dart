@@ -3,6 +3,7 @@ import 'package:DriveForme/src/data/constants/colour_constants.dart';
 import 'package:DriveForme/src/data/constants/style_constants.dart';
 import 'package:DriveForme/src/data/models/vehicle_model.dart';
 import 'package:DriveForme/src/interfaces/components/add_vehicle_sheet.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -81,8 +82,9 @@ class _MyVehiclesPageState extends ConsumerState<MyVehiclesPage> {
     if (!mounted) return;
 
     if (!response.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.message ?? 'Failed to delete vehicle.')),
+      showAppSnackBar(
+        context,
+        response.message ?? 'Failed to delete vehicle.',
       );
       return;
     }

@@ -5,6 +5,7 @@ import 'package:DriveForme/src/data/constants/colour_constants.dart';
 import 'package:DriveForme/src/data/constants/style_constants.dart';
 import 'package:DriveForme/src/interfaces/components/input_field.dart';
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -40,9 +41,7 @@ class _RaiseTicketPageState extends ConsumerState<RaiseTicketPage> {
     final subject = _subjectController.text.trim();
     final description = _descriptionController.text.trim();
     if (subject.isEmpty || description.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter subject and description.')),
-      );
+      showAppSnackBar(context, 'Please enter subject and description.');
       return;
     }
 
@@ -67,9 +66,7 @@ class _RaiseTicketPageState extends ConsumerState<RaiseTicketPage> {
     setState(() => _isSubmitting = false);
 
     if (!response.success) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(_friendlyError(response.message))));
+      showAppSnackBar(context, _friendlyError(response.message));
       return;
     }
 
@@ -78,14 +75,11 @@ class _RaiseTicketPageState extends ConsumerState<RaiseTicketPage> {
         ? ticketData['ticketId']?.toString()
         : null;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          ticketId != null && ticketId.isNotEmpty
-              ? 'Ticket $ticketId submitted successfully.'
-              : 'Support ticket submitted successfully.',
-        ),
-      ),
+    showAppSnackBar(
+      context,
+      ticketId != null && ticketId.isNotEmpty
+          ? 'Ticket $ticketId submitted successfully.'
+          : 'Support ticket submitted successfully.',
     );
     final mongoId = ticketData is Map ? ticketData['_id']?.toString() : null;
     if (mongoId != null && isMongoObjectId(mongoId)) {

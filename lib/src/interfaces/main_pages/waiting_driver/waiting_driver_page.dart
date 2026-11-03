@@ -12,6 +12,7 @@ import 'package:DriveForme/src/data/utils/trip_screen_helpers.dart';
 import 'package:DriveForme/src/interfaces/components/trip_map_view.dart';
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
 import 'package:DriveForme/src/interfaces/components/trip_route_summary_card.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -136,12 +137,9 @@ class _WaitingDriverPageState extends ConsumerState<WaitingDriverPage>
           '';
       if (tripId.isNotEmpty && tripId != widget.tripMongoId) return;
       if (!mounted || _navigatedToDriverFound) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Previous driver cancelled. Still finding you another driver...',
-          ),
-        ),
+      showAppSnackBar(
+        context,
+        'Previous driver cancelled. Still finding you another driver...',
       );
     };
     socket.listenForTripReassigned(_onTripReassigned!);
@@ -177,9 +175,7 @@ class _WaitingDriverPageState extends ConsumerState<WaitingDriverPage>
       _stageTimer?.cancel();
       await ref.read(activeTripProvider.notifier).clear();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This trip was cancelled.')),
-      );
+      showAppSnackBar(context, 'This trip was cancelled.');
       await navigateAfterTripCancelled(trip.toCancelledDetailsArguments());
       return;
     }

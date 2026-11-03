@@ -4,6 +4,7 @@ import 'package:DriveForme/src/data/providers/notification_provider.dart';
 import 'package:DriveForme/src/data/providers/user_provider.dart';
 import 'package:DriveForme/src/data/services/auth_logout_service.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shimmer/shimmer.dart';
@@ -447,9 +448,7 @@ class _AccountMenuCard extends ConsumerWidget {
       } catch (_) {}
 
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Logout failed: $e')));
+        showAppSnackBar(context, 'Logout failed: $e');
         NavigationService().pushNamedAndRemoveUntil('Phone');
       }
     }

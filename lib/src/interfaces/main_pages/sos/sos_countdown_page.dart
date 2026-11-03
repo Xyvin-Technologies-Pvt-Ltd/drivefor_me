@@ -6,6 +6,7 @@ import 'package:DriveForme/src/data/constants/style_constants.dart';
 import 'package:DriveForme/src/data/models/sos_model.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
 import 'package:DriveForme/src/interfaces/main_pages/sos/sos_shared.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -69,8 +70,9 @@ class _SosCountdownPageState extends ConsumerState<SosCountdownPage> {
 
     if (!response.success || response.data == null) {
       setState(() => _isSubmitting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.message ?? 'Failed to send SOS alert.')),
+      showAppSnackBar(
+        context,
+        response.message ?? 'Failed to send SOS alert.',
       );
       return;
     }

@@ -12,6 +12,7 @@ import 'package:DriveForme/src/data/services/secure_storage_service.dart';
 import 'package:DriveForme/src/data/utils/auth_navigation.dart';
 import 'package:DriveForme/src/interfaces/animations/index.dart' as anim;
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -298,9 +299,7 @@ class _PhoneNumberScreenState extends ConsumerState<PhoneNumberScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppSnackBar(context, message);
   }
 }
 
@@ -701,8 +700,6 @@ class _OTPScreenState extends ConsumerState<OTPScreen> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppSnackBar(context, message);
   }
 }

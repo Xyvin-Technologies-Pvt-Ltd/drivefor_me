@@ -4,6 +4,7 @@ import 'package:DriveForme/src/data/constants/style_constants.dart';
 import 'package:DriveForme/src/data/models/wallet_model.dart';
 import 'package:DriveForme/src/data/providers/wallet_provider.dart';
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,26 +36,20 @@ class _ReferEarnPageState extends ConsumerState<ReferEarnPage> {
     setState(() => _isApplyingReferral = false);
 
     if (!response.success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(response.message ?? 'Failed to apply code.')),
-      );
+      showAppSnackBar(context, response.message ?? 'Failed to apply code.');
       return;
     }
 
     ref.invalidate(walletProvider);
     _referralController.clear();
     if (mounted) Navigator.of(context).maybePop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Referral code applied successfully.')),
-    );
+    showAppSnackBar(context, 'Referral code applied successfully.');
   }
 
   void _copyReferralCode(String code) {
     if (code.isEmpty) return;
     Clipboard.setData(ClipboardData(text: code));
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Referral code copied.')));
+    showAppSnackBar(context, 'Referral code copied.');
   }
 
   void _shareReferralCode(String code) {
@@ -62,11 +57,7 @@ class _ReferEarnPageState extends ConsumerState<ReferEarnPage> {
     final message =
         'Join DriveFORme! Use my referral code $code and earn ₹100 for every successful vehicle owner referral.';
     Clipboard.setData(ClipboardData(text: message));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Invite message copied. Share with friends!'),
-      ),
-    );
+    showAppSnackBar(context, 'Invite message copied. Share with friends!');
   }
 
   void _showReferralHelp() {

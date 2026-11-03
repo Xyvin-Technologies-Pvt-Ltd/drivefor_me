@@ -6,6 +6,7 @@ import 'package:DriveForme/src/data/models/vehicle_model.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
 import 'package:DriveForme/src/data/services/secure_storage_service.dart';
 import 'package:DriveForme/src/interfaces/components/input_field.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -438,9 +439,6 @@ class _AddVehicleBottomSheetState extends ConsumerState<AddVehicleBottomSheet> {
   void _showMessage(String message) {
     final rootContext = NavigationService.navigatorKey.currentContext;
     if (rootContext == null) return;
-
-    ScaffoldMessenger.of(
-      rootContext,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppSnackBar(rootContext, message);
   }
 }

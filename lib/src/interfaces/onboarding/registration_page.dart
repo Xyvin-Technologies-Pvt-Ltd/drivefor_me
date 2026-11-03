@@ -10,6 +10,7 @@ import 'package:DriveForme/src/interfaces/components/add_vehicle_sheet.dart';
 import 'package:DriveForme/src/interfaces/components/dropdown.dart';
 import 'package:DriveForme/src/interfaces/components/input_field.dart';
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -98,9 +99,7 @@ class _RegistrationPageState extends ConsumerState<RegistrationPage> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppSnackBar(context, message);
   }
 
   @override

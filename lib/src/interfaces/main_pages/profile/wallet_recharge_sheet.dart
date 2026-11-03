@@ -7,6 +7,7 @@ import 'package:DriveForme/src/data/providers/user_provider.dart';
 import 'package:DriveForme/src/data/providers/wallet_provider.dart';
 import 'package:DriveForme/src/data/services/razorpay_checkout_service.dart';
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -188,9 +189,7 @@ class _WalletRechargeSheetState extends ConsumerState<WalletRechargeSheet> {
   }
 
   void _showMessage(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppSnackBar(context, message);
   }
 
   @override

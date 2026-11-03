@@ -24,6 +24,7 @@ import 'package:DriveForme/src/interfaces/components/add_vehicle_sheet.dart';
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
 import 'package:DriveForme/src/interfaces/components/schedule_sheet.dart';
 import 'package:DriveForme/src/interfaces/components/select_rider.dart';
+import 'package:DriveForme/src/data/services/snackbar_service.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -1916,9 +1917,7 @@ class _CreateTripPageState extends ConsumerState<CreateTripPage> {
 
   void _showError(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAppSnackBar(context, message);
   }
 
   Future<void> _pickPickupLocation() async {

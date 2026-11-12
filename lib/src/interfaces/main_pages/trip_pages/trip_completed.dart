@@ -4,6 +4,7 @@ import 'package:DriveForme/src/data/apis/trip_api.dart';
 import 'package:DriveForme/src/data/constants/colour_constants.dart';
 import 'package:DriveForme/src/data/constants/style_constants.dart';
 import 'package:DriveForme/src/data/models/trip_model.dart';
+import 'package:DriveForme/src/data/providers/nav_provider.dart';
 import 'package:DriveForme/src/data/services/navigation_services.dart';
 import 'package:DriveForme/src/data/services/trip_socket_service.dart';
 import 'package:DriveForme/src/interfaces/components/primaryButton.dart';
@@ -102,10 +103,12 @@ class TripCompletedPage extends ConsumerStatefulWidget {
 
 class _TripCompletedPageState extends ConsumerState<TripCompletedPage> {
   static const _pollInterval = Duration(seconds: 3);
+  static const _homeRedirectDelay = Duration(seconds: 2);
 
   bool _waitingForCashCollection = false;
   bool _navigatedAway = false;
   Timer? _pollTimer;
+  Timer? _homeRedirectTimer;
   TripSocketService? _tripSocket;
 
   bool get _isOnline =>
@@ -140,6 +143,7 @@ class _TripCompletedPageState extends ConsumerState<TripCompletedPage> {
   @override
   void initState() {
     super.initState();
+    _homeRedirectTimer = Timer(_homeRedirectDelay, _goHome);
     if (_isCash && widget.tripMongoId.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -150,8 +154,18 @@ class _TripCompletedPageState extends ConsumerState<TripCompletedPage> {
 
   @override
   void dispose() {
+    _homeRedirectTimer?.cancel();
     _stopCashCollectionWatch();
     super.dispose();
+  }
+
+  void _goHome() {
+    if (_navigatedAway || !mounted) return;
+    _navigatedAway = true;
+    _homeRedirectTimer?.cancel();
+    _stopCashCollectionWatch();
+    ref.read(selectedIndexProvider.notifier).updateIndex(0);
+    NavigationService().resetToNavbar();
   }
 
   void _startCashCollectionWatch() {
@@ -223,6 +237,7 @@ class _TripCompletedPageState extends ConsumerState<TripCompletedPage> {
   void _goToPaymentCompleted() {
     if (_navigatedAway || !mounted) return;
     _navigatedAway = true;
+    _homeRedirectTimer?.cancel();
     _stopCashCollectionWatch();
 
     if (widget.isRated) {
@@ -243,11 +258,15 @@ class _TripCompletedPageState extends ConsumerState<TripCompletedPage> {
     if (_navigatedAway) return;
 
     if (widget.isRated) {
+      _navigatedAway = true;
+      _homeRedirectTimer?.cancel();
       NavigationService().pushNamedAndRemoveUntil('thank_you');
       return;
     }
 
     if (_isWallet) {
+      _navigatedAway = true;
+      _homeRedirectTimer?.cancel();
       NavigationService().pushNamedReplacement(
         'driver_rating',
         arguments: _ratingArgs,
@@ -285,6 +304,8 @@ class _TripCompletedPageState extends ConsumerState<TripCompletedPage> {
     }
 
     // Online / other: keep existing post-trip acknowledgement flow.
+    _navigatedAway = true;
+    _homeRedirectTimer?.cancel();
     NavigationService().pushNamedReplacement(
       'payment_completed',
       arguments: {
